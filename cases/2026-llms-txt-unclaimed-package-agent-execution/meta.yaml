@@ -1,0 +1,39 @@
+slug: 2026-llms-txt-unclaimed-package-agent-execution
+title_en: llms.txt Unclaimed Package Execution by Coding Agents
+title_cn: llms.txt 未注册依赖被编码代理自动安装执行
+year: 2026
+disclosed: '2026-08-27'
+category: agent-risk
+severity: high
+severity_basis: quantifiable-impact
+severity_evidence: Researchers found 237 unclaimed artifacts in 8,565 agent-facing files and received callbacks
+  from enterprise environments after coding agents installed inert proof-of-concept packages.
+real_incident: true
+reproducible: true
+ai_tool:
+- Claude Code
+- OpenAI Codex
+- Hermes
+- llms.txt
+language:
+- Markdown
+- package manager commands
+attack_surface:
+- agent-facing documentation
+- unclaimed packages
+- expired domains
+- automatic shell execution
+references:
+- title: TechRadar report
+  url: https://www.techradar.com/pro/security/top-ai-tools-including-claude-codex-and-hermes-installed-suspicious-code-inside-corporate-networks
+- title: OSV malicious package record
+  url: https://osv.dev/vulnerability/MAL-2026-11069
+- title: Chrome Lighthouse llms.txt documentation
+  url: https://developer.chrome.com/docs/lighthouse/agentic-browsing/llms-txt
+tldr: 研究人员发现大量官网 llms.txt 把编码代理指向未注册包名或无人持有的域名。注册少量名称并放入无害回连后，Claude、Codex 和 Hermes 等代理在企业环境中自动安装执行；其中一个 Clerk 文档路径还已指向真实恶意
+  npm 包。
+tags:
+- ai-security
+- agent-risk
+verification_notes: Researchers found 237 unclaimed artifacts in 8,565 agent-facing files and received callbacks
+  from enterprise environments after coding agents installed inert proof-of-concept packages.

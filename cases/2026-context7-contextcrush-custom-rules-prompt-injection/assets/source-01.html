@@ -1,0 +1,460 @@
+<!DOCTYPE html><!-- Last Published: Fri Aug 28 2026 20:10:16 GMT+0000 (Coordinated Universal Time) --><html data-wf-domain="www.noma.security" data-wf-page="6a2fc242594b1b4749691fef" data-wf-site="6a26af028fd645aaf775e517" lang="en" data-wf-collection="6a2fc242594b1b4749691f6a" data-wf-item-slug="contextcrush"><head><meta charset="utf-8"/><link href="https://cdn.prod.website-files.com" rel="preconnect" crossorigin="anonymous"/><title>ContextCrush: The Context7 MCP Server Vulnerability Hiding in Plain Sight | Noma Security</title><meta content="Noma Labs disclosed ContextCrush, a flaw in Upstash’s Context7 MCP server where unsanitized Custom Rules poisoned AI agent context inside developers’ IDEs." name="description"/><meta content="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a2fca1be2f7e8ba9d5d2b82_6a2fc96e312ca19ce5c2c3fe_ContextCrush2.webp" property="og:image"/><meta content="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a2fca1be2f7e8ba9d5d2b82_6a2fc96e312ca19ce5c2c3fe_ContextCrush2.webp" name="twitter:image"/><meta content="width=device-width, initial-scale=1" name="viewport"/><link href="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/css/staging-noma.webflow.shared.7eaf1e58c.min.css" rel="stylesheet" type="text/css" integrity="sha384-fq8eWMH953nJf6PIBLlWjldVHkioP40nVsom8FWSkygu+4rQZvqwqBKgZdbUZbD7" crossorigin="anonymous"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link href="https://fonts.gstatic.com" rel="preconnect" crossorigin="anonymous"/><script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js" type="text/javascript"></script><script type="text/javascript">WebFont.load({  google: {    families: ["Geist:300,400,500,600,700,800","Libertinus Serif:400"]  }});</script><script type="text/javascript">!function(o,c){var n=c.documentElement,t=" w-mod-";n.className+=t+"js",("ontouchstart"in o||o.DocumentTouch&&c instanceof DocumentTouch)&&(n.className+=t+"touch")}(window,document);</script><link href="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2bfdae481853bf49cc1ca6_favicon.png" rel="icon" type="image/png" sizes="32x32" media="(prefers-color-scheme: light)"/><link href="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2bfdae481853bf49cc1ca6_favicon.png" rel="icon" type="image/png" sizes="32x32" media="(prefers-color-scheme: dark)"/><link href="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2bfdae83f7bf9943760c7e_favicon.png" rel="icon" type="image/png" sizes="48x48"/><link href="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2bfd4b333a7f4341e98b87_favicon.png" rel="apple-touch-icon" sizes="180x180"/><link href="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2bfd4b55177b1515f1d4b1_favicon.png" rel="icon" type="image/png" sizes="192x192"/><link href="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2bfd4b2159f0390304d046_favicon.png" rel="icon" type="image/png" sizes="512x512"/><link href="https://www.noma.security/noma-labs/contextcrush" rel="canonical"/><script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/535adc4fecc0ef558a5e7a2a/script.js"></script>
+
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-M9CWZWJ7');</script>
+<!-- End Google Tag Manager --></head><body><div class="page-wrapper"><div class="global-styles w-embed"><style>
+
+h1 b, h1 strong,
+h2 b, h2 strong,
+h3 b, h3 strong,
+h4 b, h4 strong,
+h5 b, h5 strong,
+h6 b, h6 strong {
+  font-weight: var(--_typography---weight--medium);
+}
+
+/* Make text look crisper and more legible in all browsers */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Focus state style for keyboard navigation for the focusable elements */
+*[tabindex]:focus-visible,
+  input[type="file"]:focus-visible {
+   outline: 0.125rem solid #4d65ff;
+   outline-offset: 0.125rem;
+}
+
+/* Set color style to inherit */
+.inherit-color * {
+    color: inherit;
+}
+
+/* Get rid of top margin on first element in any rich text element */
+.w-richtext > :not(div):first-child, .w-richtext > div:first-child > :first-child {
+  margin-top: 0 !important;
+}
+
+/* Get rid of bottom margin on last element in any rich text element */
+.w-richtext>:last-child, .w-richtext ol li:last-child, .w-richtext ul li:last-child {
+	margin-bottom: 0 !important;
+}
+
+
+/* Make sure containers never lose their center alignment */
+.container-medium,.container-small, .container-large {
+	margin-right: auto !important;
+  margin-left: auto !important;
+}
+
+/* 
+Make the following elements inherit typography styles from the parent and not have hardcoded values. 
+Important: You will not be able to style for example "All Links" in Designer with this CSS applied.
+Uncomment this CSS to use it in the project. Leave this message for future hand-off.
+*/
+/*
+a,
+.w-input,
+.w-select,
+.w-tab-link,
+.w-nav-link,
+.w-dropdown-btn,
+.w-dropdown-toggle,
+.w-dropdown-link {
+  color: inherit;
+  text-decoration: inherit;
+  font-size: inherit;
+}
+*/
+
+/* Apply "..." after 3 lines of text */
+.text-style-3lines {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+}
+
+/* Apply "..." after 2 lines of text */
+.text-style-2lines {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+/* These classes are never overwritten */
+.hide {
+  display: none !important;
+}
+
+@media screen and (max-width: 991px) {
+    .hide, .hide-tablet {
+        display: none !important;
+    }
+}
+  @media screen and (max-width: 767px) {
+    .hide-mobile-landscape{
+      display: none !important;
+    }
+}
+  @media screen and (max-width: 479px) {
+    .hide-mobile{
+      display: none !important;
+    }
+}
+ 
+.margin-0 {
+  margin: 0rem !important;
+}
+  
+.padding-0 {
+  padding: 0rem !important;
+}
+
+.spacing-clean {
+padding: 0rem !important;
+margin: 0rem !important;
+}
+
+.margin-top {
+  margin-right: 0rem !important;
+  margin-bottom: 0rem !important;
+  margin-left: 0rem !important;
+}
+
+.padding-top {
+  padding-right: 0rem !important;
+  padding-bottom: 0rem !important;
+  padding-left: 0rem !important;
+}
+  
+.margin-right {
+  margin-top: 0rem !important;
+  margin-bottom: 0rem !important;
+  margin-left: 0rem !important;
+}
+
+.padding-right {
+  padding-top: 0rem !important;
+  padding-bottom: 0rem !important;
+  padding-left: 0rem !important;
+}
+
+.margin-bottom {
+  margin-top: 0rem !important;
+  margin-right: 0rem !important;
+  margin-left: 0rem !important;
+}
+
+.padding-bottom {
+  padding-top: 0rem !important;
+  padding-right: 0rem !important;
+  padding-left: 0rem !important;
+}
+
+.margin-left {
+  margin-top: 0rem !important;
+  margin-right: 0rem !important;
+  margin-bottom: 0rem !important;
+}
+  
+.padding-left {
+  padding-top: 0rem !important;
+  padding-right: 0rem !important;
+  padding-bottom: 0rem !important;
+}
+  
+.margin-horizontal {
+  margin-top: 0rem !important;
+  margin-bottom: 0rem !important;
+}
+
+.padding-horizontal {
+  padding-top: 0rem !important;
+  padding-bottom: 0rem !important;
+}
+
+.margin-vertical {
+  margin-right: 0rem !important;
+  margin-left: 0rem !important;
+}
+  
+.padding-vertical {
+  padding-right: 0rem !important;
+  padding-left: 0rem !important;
+}
+
+/* Use Cases Card Hover */
+.use-cases_card:hover .use-cases-card_hover{
+  opacity: 1;
+}
+
+/* Navbar Animations */
+.nav-dd-navigation_link:hover .nav-dd_link-hover-icon{
+  opacity: 1;
+}
+
+.nav-dd_toggle.w--open .nav-dd-toggle_icon{
+  transform: rotate(180deg);
+}
+
+.blog_rte a.button,
+.blog_rte a.button:hover,
+.blog_rte a.button:focus {
+  color: var(--text-color--alternate);
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+}
+  
+</style></div><div class="hide w-embed"><style>
+  .blog_rte video{
+    width: 100%;
+    height: auto;
+  }
+
+  .blog_rte .w-embed {
+  	margin-top: var(--_spacing---16);
+    margin-bottom: var(--_spacing---16); 
+  }
+</style></div><div data-w-id="396176c6-906a-9f74-c6d0-8a4663dfdea9" data-animation="default" data-collapse="medium" data-duration="400" data-easing="ease" data-easing2="ease" role="banner" class="nav_component w-nav"><div class="padding-global"><div class="nav_container"><a href="/" class="nav_brand w-nav-brand"><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2b46d201ef5694a6c8323e_noma-logo.svg" loading="lazy" alt="Noma logo" height="30"/></a><nav role="navigation" class="nav_menu w-nav-menu"><div class="nav-menu_inner"><div class="nav-menu_spacer"></div><div class="nav-menu_links-wrap"><div data-hover="true" data-delay="0" class="nav-dropdown w-dropdown"><div class="nav-dd_toggle w-dropdown-toggle"><div>Platform</div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c1313c7843dc63ebb72dc_carette-down.svg" loading="lazy" alt="" class="nav-dd-toggle_icon"/></div><nav class="nav-dd_navigation w-dropdown-list"><a href="/platform" class="nav-dd-navigation_link w-inline-block"><div class="nav-dd_icon-wrap"><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 22 22" fill="none" class="icon-21"><g clip-path="url(#clip0_13063_41630)"><path d="M11.9367 15.6329L12.0399 15.7362C12.321 16.0175 12.4616 16.1582 12.6237 16.211C12.7663 16.2573 12.9199 16.2573 13.0625 16.211C13.2246 16.1582 13.3651 16.0175 13.6462 15.7362L17.926 11.4519C18.8991 10.4778 19.3856 9.99071 19.5679 9.42909C19.7283 8.93506 19.7283 8.4029 19.5679 7.90888C19.3856 7.34725 18.8991 6.8602 17.926 5.8861L17.5777 5.5374C17.2966 5.256 17.156 5.1153 16.9939 5.06259C16.8513 5.01623 16.6977 5.01623 16.5551 5.06259C16.393 5.1153 16.2525 5.256 15.9714 5.5374L10.8774 10.6368V8.20101C10.8774 7.64751 10.8774 7.37076 10.8149 7.11032C10.7595 6.87941 10.6682 6.65867 10.5442 6.4562C10.4044 6.22783 10.209 6.03214 9.81799 5.64076L9.71479 5.53746C9.43369 5.25606 9.29314 5.11536 9.13104 5.06265C8.98845 5.01629 8.83483 5.01629 8.69224 5.06265C8.53014 5.11536 8.38959 5.25606 8.10848 5.53746L3.8287 9.82175C2.85562 10.7958 2.36908 11.2829 2.18679 11.8445C2.02644 12.3385 2.02644 12.8707 2.18679 13.3647C2.36908 13.9264 2.85562 14.4134 3.8287 15.3875L4.17703 15.7362C4.45813 16.0176 4.59869 16.1583 4.76079 16.211C4.90338 16.2574 5.057 16.2574 5.19959 16.211C5.36169 16.1583 5.50224 16.0176 5.78334 15.7362L10.8774 10.6368L10.8774 13.0726C10.8774 13.6261 10.8774 13.9029 10.9398 14.1633C10.9952 14.3942 11.0865 14.6149 11.2105 14.8174C11.3503 15.0458 11.5458 15.2415 11.9367 15.6329Z" fill="#161F2B"></path></g><defs><clippath id="clip0_13063_41630"><rect width="21.3333" height="21.3333" fill="white"></rect></clippath></defs></svg></div><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Platform overview</div><div class="nav-dd-link_subtext">The unified platform for end-to-end AI security</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/platform/endpoint-agents" class="nav-dd-navigation_link w-inline-block"><div class="nav-dd_icon-wrap"><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 22 22" fill="none" class="icon-21"><g clip-path="url(#clip0_13063_41641)"><path d="M11.0001 7.1999C10.2485 7.1999 9.5138 7.42277 8.88889 7.84032C8.26398 8.25787 7.77693 8.85135 7.48932 9.5457C7.2017 10.2401 7.12645 11.0041 7.27307 11.7412C7.4197 12.4784 7.78161 13.1555 8.31305 13.6869C8.84449 14.2183 9.52159 14.5803 10.2587 14.7269C10.9958 14.8735 11.7599 14.7983 12.4543 14.5106C13.1486 14.223 13.7421 13.736 14.1596 13.1111C14.5772 12.4862 14.8001 11.7515 14.8001 10.9999C14.7988 9.99246 14.398 9.02665 13.6857 8.31428C12.9733 7.60192 12.0075 7.20116 11.0001 7.1999ZM11.0001 13.5332C10.499 13.5332 10.0092 13.3847 9.59261 13.1063C9.17601 12.8279 8.8513 12.4323 8.65956 11.9694C8.46782 11.5065 8.41765 10.9971 8.5154 10.5057C8.61315 10.0143 8.85443 9.56286 9.20872 9.20856C9.56301 8.85427 10.0144 8.61299 10.5058 8.51524C10.9972 8.4175 11.5066 8.46766 11.9695 8.65941C12.4324 8.85115 12.8281 9.17585 13.1064 9.59246C13.3848 10.0091 13.5334 10.4989 13.5334 10.9999C13.5334 11.6718 13.2665 12.3161 12.7914 12.7912C12.3163 13.2663 11.6719 13.5332 11.0001 13.5332ZM18.5747 6.10344L11.6081 2.29157C11.4219 2.18872 11.2127 2.13477 11.0001 2.13477C10.7874 2.13477 10.5782 2.18872 10.3921 2.29157L3.42539 6.10503C3.22644 6.21388 3.06036 6.37416 2.94449 6.56912C2.82863 6.76408 2.76724 6.98657 2.76672 7.21336V14.7849C2.76724 15.0116 2.82863 15.2341 2.94449 15.4291C3.06036 15.6241 3.22644 15.7843 3.42539 15.8932L10.3921 19.7067C10.5782 19.8095 10.7874 19.8635 11.0001 19.8635C11.2127 19.8635 11.4219 19.8095 11.6081 19.7067L18.5747 15.8932C18.7737 15.7843 18.9398 15.6241 19.0556 15.4291C19.1715 15.2341 19.2329 15.0116 19.2334 14.7849V7.21415C19.2333 6.98696 19.1721 6.76397 19.0562 6.56856C18.9403 6.37314 18.774 6.21249 18.5747 6.10344ZM11.0001 18.5999L4.03339 14.7857V7.21415L11.0001 3.3999L17.9667 7.21336V14.7849L11.0001 18.5999Z" fill="#161F2B"></path></g><defs><clippath id="clip0_13063_41641"><rect width="21.3333" height="21.3333" fill="white"></rect></clippath></defs></svg></div><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Noma for Endpoint AI Agents</div><div class="nav-dd-link_subtext">Secure the agents your employees use</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/platform/saas-agents" class="nav-dd-navigation_link w-inline-block"><div class="nav-dd_icon-wrap"><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 22 22" fill="none" class="icon-21"><g clip-path="url(#clip0_13063_41651)"><path d="M19.2334 10.3666H18.5732C18.4212 8.57703 17.6412 6.89882 16.3712 5.62882C15.1012 4.35882 13.423 3.57886 11.6334 3.42688V2.76663C11.6334 2.59866 11.5667 2.43757 11.4479 2.3188C11.3292 2.20003 11.1681 2.1333 11.0001 2.1333C10.8321 2.1333 10.671 2.20003 10.5523 2.3188C10.4335 2.43757 10.3668 2.59866 10.3668 2.76663V3.42688C8.57715 3.57886 6.89894 4.35882 5.62894 5.62882C4.35894 6.89882 3.57898 8.57703 3.42701 10.3666H2.76676C2.59879 10.3666 2.43769 10.4334 2.31892 10.5521C2.20015 10.6709 2.13342 10.832 2.13342 11C2.13342 11.1679 2.20015 11.329 2.31892 11.4478C2.43769 11.5666 2.59879 11.6333 2.76676 11.6333H3.42701C3.57898 13.4229 4.35894 15.1011 5.62894 16.3711C6.89894 17.6411 8.57715 18.4211 10.3668 18.5731V19.2333C10.3668 19.4013 10.4335 19.5624 10.5523 19.6811C10.671 19.7999 10.8321 19.8666 11.0001 19.8666C11.1681 19.8666 11.3292 19.7999 11.4479 19.6811C11.5667 19.5624 11.6334 19.4013 11.6334 19.2333V18.5731C13.423 18.4211 15.1012 17.6411 16.3712 16.3711C17.6412 15.1011 18.4212 13.4229 18.5732 11.6333H19.2334C19.4014 11.6333 19.5625 11.5666 19.6813 11.4478C19.8 11.329 19.8668 11.1679 19.8668 11C19.8668 10.832 19.8 10.6709 19.6813 10.5521C19.5625 10.4334 19.4014 10.3666 19.2334 10.3666ZM11.6334 17.3016V16.7C11.6334 16.532 11.5667 16.3709 11.4479 16.2521C11.3292 16.1334 11.1681 16.0666 11.0001 16.0666C10.8321 16.0666 10.671 16.1334 10.5523 16.2521C10.4335 16.3709 10.3668 16.532 10.3668 16.7V17.3016C8.91395 17.1534 7.55674 16.5086 6.52412 15.4759C5.49149 14.4433 4.84666 13.0861 4.69842 11.6333H5.30009C5.46806 11.6333 5.62915 11.5666 5.74792 11.4478C5.8667 11.329 5.93342 11.1679 5.93342 11C5.93342 10.832 5.8667 10.6709 5.74792 10.5521C5.62915 10.4334 5.46806 10.3666 5.30009 10.3666H4.69842C4.84666 8.91383 5.49149 7.55662 6.52412 6.52399C7.55674 5.49137 8.91395 4.84654 10.3668 4.6983V5.29997C10.3668 5.46794 10.4335 5.62903 10.5523 5.7478C10.671 5.86658 10.8321 5.9333 11.0001 5.9333C11.1681 5.9333 11.3292 5.86658 11.4479 5.7478C11.5667 5.62903 11.6334 5.46794 11.6334 5.29997V4.6983C13.0862 4.84654 14.4434 5.49137 15.4761 6.52399C16.5087 7.55662 17.1535 8.91383 17.3018 10.3666H16.7001C16.5321 10.3666 16.371 10.4334 16.2523 10.5521C16.1335 10.6709 16.0668 10.832 16.0668 11C16.0668 11.1679 16.1335 11.329 16.2523 11.4478C16.371 11.5666 16.5321 11.6333 16.7001 11.6333H17.3018C17.1535 13.0861 16.5087 14.4433 15.4761 15.4759C14.4434 16.5086 13.0862 17.1534 11.6334 17.3016ZM11.0001 7.8333C10.3738 7.8333 9.76154 8.01902 9.24078 8.36698C8.72003 8.71494 8.31415 9.2095 8.07447 9.78814C7.83479 10.3668 7.77208 11.0035 7.89427 11.6178C8.01646 12.232 8.31805 12.7963 8.76092 13.2391C9.20378 13.682 9.76803 13.9836 10.3823 14.1058C10.9966 14.228 11.6333 14.1653 12.2119 13.9256C12.7906 13.6859 13.2851 13.28 13.6331 12.7593C13.981 12.2385 14.1668 11.6263 14.1668 11C14.1668 10.1601 13.8331 9.35466 13.2393 8.7608C12.6454 8.16693 11.8399 7.8333 11.0001 7.8333ZM11.0001 12.9C10.6243 12.9 10.257 12.7885 9.94451 12.5798C9.63205 12.371 9.38853 12.0742 9.24472 11.7271C9.10091 11.3799 9.06329 10.9979 9.1366 10.6293C9.20991 10.2607 9.39087 9.92218 9.65659 9.65646C9.92231 9.39074 10.2609 9.20979 10.6294 9.13648C10.998 9.06316 11.38 9.10079 11.7272 9.2446C12.0744 9.3884 12.3711 9.63193 12.5799 9.94438C12.7887 10.2568 12.9001 10.6242 12.9001 11C12.9001 11.5039 12.6999 11.9872 12.3436 12.3435C11.9873 12.6998 11.504 12.9 11.0001 12.9Z" fill="#161F2B"></path></g><defs><clippath id="clip0_13063_41651"><rect width="21.3333" height="21.3333" fill="white"></rect></clippath></defs></svg></div><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Noma for SaaS Agents</div><div class="nav-dd-link_subtext">Secure agents running on SaaS platforms</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/platform/homegrown-agents" class="nav-dd-navigation_link w-inline-block"><div class="nav-dd_icon-wrap"><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 22 22" fill="none" class="icon-21"><g clip-path="url(#clip0_13063_41661)"><path d="M6.35554 18.1779H3.82221V15.6446C3.82221 15.4766 3.75548 15.3155 3.63671 15.1968C3.51794 15.078 3.35685 15.0113 3.18888 15.0113C3.0209 15.0113 2.85981 15.078 2.74104 15.1968C2.62227 15.3155 2.55554 15.4766 2.55554 15.6446V18.8113C2.55554 18.9792 2.62227 19.1403 2.74104 19.2591C2.85981 19.3779 3.0209 19.4446 3.18888 19.4446H6.35554C6.52351 19.4446 6.6846 19.3779 6.80338 19.2591C6.92215 19.1403 6.98888 18.9792 6.98888 18.8113C6.98888 18.6433 6.92215 18.4822 6.80338 18.3634C6.6846 18.2446 6.52351 18.1779 6.35554 18.1779ZM18.8111 15.0113C18.6431 15.0113 18.482 15.078 18.3633 15.1968C18.2445 15.3155 18.1778 15.4766 18.1778 15.6446V18.1779H15.6444C15.4765 18.1779 15.3154 18.2446 15.1966 18.3634C15.0778 18.4822 15.0111 18.6433 15.0111 18.8113C15.0111 18.9792 15.0778 19.1403 15.1966 19.2591C15.3154 19.3779 15.4765 19.4446 15.6444 19.4446H18.8111C18.9791 19.4446 19.1402 19.3779 19.2589 19.2591C19.3777 19.1403 19.4444 18.9792 19.4444 18.8113V15.6446C19.4444 15.4766 19.3777 15.3155 19.2589 15.1968C19.1402 15.078 18.9791 15.0113 18.8111 15.0113ZM3.18888 6.98903C3.35685 6.98903 3.51794 6.9223 3.63671 6.80353C3.75548 6.68476 3.82221 6.52367 3.82221 6.3557V3.82236H6.35554C6.52351 3.82236 6.6846 3.75564 6.80338 3.63686C6.92215 3.51809 6.98888 3.357 6.98888 3.18903C6.98888 3.02106 6.92215 2.85997 6.80338 2.7412C6.6846 2.62242 6.52351 2.5557 6.35554 2.5557H3.18888C3.0209 2.5557 2.85981 2.62242 2.74104 2.7412C2.62227 2.85997 2.55554 3.02106 2.55554 3.18903V6.3557C2.55554 6.52367 2.62227 6.68476 2.74104 6.80353C2.85981 6.9223 3.0209 6.98903 3.18888 6.98903Z" fill="#161F2B"></path><path d="M11.089 4.459C11.2662 4.47257 11.4381 4.52637 11.5913 4.6165L11.6663 4.66516L11.7372 4.71876C11.8748 4.83121 11.9847 4.97369 12.0588 5.13521L12.0935 5.21768L13.3552 8.64411L16.7825 9.90665C17.0059 9.98913 17.1988 10.1384 17.335 10.3338C17.4712 10.5293 17.5444 10.7619 17.5444 11.0001C17.5444 11.2384 17.4712 11.471 17.335 11.6665C17.2158 11.8374 17.0533 11.9726 16.8649 12.059L16.7825 12.0936L13.3552 13.3554L12.0935 16.7826C12.011 17.0061 11.8617 17.1989 11.6663 17.3351C11.4708 17.4713 11.2382 17.5446 11 17.5446C10.7617 17.5446 10.5291 17.4713 10.3337 17.3351C10.1627 17.216 10.0276 17.0535 9.94113 16.8651L9.9065 16.7826L8.64395 13.3554L5.21752 12.0936C4.99407 12.0112 4.80121 11.8619 4.665 11.6665C4.54583 11.4954 4.47469 11.296 4.45884 11.0892L4.45554 11.0001L4.45884 10.9111C4.47469 10.7043 4.54583 10.5049 4.665 10.3338C4.80121 10.1384 4.99407 9.98913 5.21752 9.90665L8.64395 8.64411L9.9065 5.21768L9.94113 5.13521C10.0276 4.94681 10.1627 4.78431 10.3337 4.66516C10.5291 4.52895 10.7617 4.4557 11 4.4557L11.089 4.459ZM9.73167 9.35661C9.66755 9.5305 9.53035 9.6677 9.35645 9.73183L5.9127 11.0001L9.35645 12.2685L9.41995 12.2957C9.56357 12.3672 9.67556 12.4915 9.73167 12.6437L11 16.0866L12.2683 12.6437C12.3324 12.4698 12.4696 12.3326 12.6435 12.2685L16.0864 11.0001L12.6435 9.73183C12.4696 9.6677 12.3324 9.5305 12.2683 9.35661L11 5.91286L9.73167 9.35661Z" fill="#161F2B"></path><path d="M18.4837 5.24736C18.8335 5.24736 19.117 5.53092 19.117 5.8807V6.19736H19.4337C19.7835 6.19736 20.067 6.48092 20.067 6.8307C20.067 7.18048 19.7835 7.46403 19.4337 7.46403H19.117V7.7807C19.117 8.13048 18.8335 8.41403 18.4837 8.41403C18.1339 8.41403 17.8504 8.13048 17.8504 7.7807V7.46403H17.5337C17.1839 7.46403 16.9004 7.18048 16.9004 6.8307C16.9004 6.48092 17.1839 6.19736 17.5337 6.19736H17.8504V5.8807C17.8504 5.53092 18.1339 5.24736 18.4837 5.24736Z" fill="#161F2B"></path><path d="M15.6337 1.92236C15.9835 1.92236 16.267 2.20592 16.267 2.5557V3.34736H17.0587C17.4085 3.34736 17.692 3.63092 17.692 3.9807C17.692 4.33048 17.4085 4.61403 17.0587 4.61403H16.267V5.4057C16.267 5.75548 15.9835 6.03903 15.6337 6.03903C15.2839 6.03903 15.0004 5.75548 15.0004 5.4057V4.61403H14.2087C13.8589 4.61403 13.5754 4.33048 13.5754 3.9807C13.5754 3.63092 13.8589 3.34736 14.2087 3.34736H15.0004V2.5557C15.0004 2.20592 15.2839 1.92236 15.6337 1.92236Z" fill="#161F2B"></path></g><defs><clippath id="clip0_13063_41661"><rect width="21.3333" height="21.3333" fill="white"></rect></clippath></defs></svg></div><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Noma for Homegrown Agents</div><div class="nav-dd-link_subtext">Secure agents engineers build</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a></nav></div><div data-hover="true" data-delay="0" class="nav-dropdown w-dropdown"><div class="nav-dd_toggle w-dropdown-toggle"><div>Products</div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c1313c7843dc63ebb72dc_carette-down.svg" loading="lazy" alt="" class="nav-dd-toggle_icon"/></div><nav class="nav-dd_navigation w-dropdown-list"><a href="/products/ai-spm" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">AI-SPM</div><div class="nav-dd-link_subtext">Discover every agent, MCP, skill, and tool, and surface risk</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/products/agent-access-control" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Agent Access Control</div><div class="nav-dd-link_subtext">Govern what every agent can do</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/products/ai-dr" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">AI-DR</div><div class="nav-dd-link_subtext">Secure agent actions in runtime</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/products/ai-red-teaming" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">AI Red Teaming</div><div class="nav-dd-link_subtext">Find agent weaknesses before attackers do</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a></nav></div><div data-hover="true" data-delay="0" class="nav-dropdown w-dropdown"><div class="nav-dd_toggle w-dropdown-toggle"><div>Solutions</div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c1313c7843dc63ebb72dc_carette-down.svg" loading="lazy" alt="" class="nav-dd-toggle_icon"/></div><nav class="nav-dd_navigation is_columns w-dropdown-list"><div class="nav-dd_navigation-columns_wrap"><div class="nav-dd_navigation-column"><a href="/solutions/ai-asset-discovery" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">AI Asset Discovery</div><div class="nav-dd-link_subtext"></div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/solutions/agentic-identity" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Agentic Identity</div><div class="nav-dd-link_subtext"></div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/solutions/agent-control-plane" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">AI Agent Control Plane</div><div class="nav-dd-link_subtext"></div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/solutions/ai-compliance" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">AI Compliance &amp; Regulation</div><div class="nav-dd-link_subtext"></div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a></div><div class="nav-dd_navigation-column"><a href="/solutions/agent-behavior-runtime-control" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Agent Runtime Security</div><div class="nav-dd-link_subtext"></div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/solutions/mcp-security" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">MCP Security</div><div class="nav-dd-link_subtext"></div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/solutions/ai-supply-chain-security" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">AI Supply Chain Security</div><div class="nav-dd-link_subtext"></div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/solutions/coding-assistant-security" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Coding Assistant Security</div><div class="nav-dd-link_subtext"></div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a></div></div></nav></div><div data-hover="true" data-delay="0" class="nav-dropdown w-dropdown"><div class="nav-dd_toggle w-dropdown-toggle"><div>Resources</div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c1313c7843dc63ebb72dc_carette-down.svg" loading="lazy" alt="" class="nav-dd-toggle_icon"/></div><nav class="nav-dd_navigation is-smaller w-dropdown-list"><a href="/blog" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Blog</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/noma-labs" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Noma Labs</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/webinars" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Webinars</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="https://trust.noma.security/" target="_blank" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Trust Center</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a></nav></div><div data-hover="true" data-delay="0" class="nav-dropdown w-dropdown"><div class="nav-dd_toggle w-dropdown-toggle"><div>Company</div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c1313c7843dc63ebb72dc_carette-down.svg" loading="lazy" alt="" class="nav-dd-toggle_icon"/></div><nav class="nav-dd_navigation is-smaller w-dropdown-list"><a href="/about" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">About</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/careers" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Careers</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/contact" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Contact Us</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a><a href="/partners" class="nav-dd-navigation_link is-space-between w-inline-block"><div class="nav-dd-link_text-wrap"><div class="nav-dd-link_text">Partners</div></div><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a2c2dc9049a627a2974f625_carette-blue.svg" loading="lazy" alt="" class="nav-dd_link-hover-icon"/></a></nav></div></div><div><a data-wf--button--variant="primary" href="/request-demo" class="button w-inline-block"><div>Book a demo</div><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 18 18" fill="none" class="button_icon"><path d="M17.8135 8.97754L8.83594 17.9551L8.12891 17.248L15.8994 9.47754H0V8.47754H15.8994L8.12891 0.707031L8.83594 0L17.8135 8.97754Z" fill="currentColor"></path></svg></a></div></div></nav><div class="nav_button w-nav-button"><div class="hamburger_line is-top"></div><div class="hamburger_line is-middle"></div><div class="hamburger_line is-bottom"></div></div></div></div></div><main class="main-wrapper"><section class="section is-blog"><div class="padding-global"><div class="container-large"><div class="blog-single_wrap"><div class="blog-single_left"><a href="/noma-labs" class="blog-single_back-link w-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 15 15" fill="none" class="icon-10"><path d="M7.78201 14.4959L0.710938 7.4248L7.78201 0.353737" stroke="currentColor"></path><path d="M0.710938 7.4248H14.7371" stroke="currentColor"></path></svg><div>Back to nomalabs</div></a><div class="blog-single_head"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a2fca1be2f7e8ba9d5d2b82_6a2fc96e312ca19ce5c2c3fe_ContextCrush2.webp" loading="lazy" alt="" class="blog-single-head_img"/><h1 class="heading-style-h3">ContextCrush: The Context7 MCP Server Vulnerability Hiding in Plain Sight</h1><div class="blog-card_author-wrapper"><div class="blog-card_author-avatar"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a2fca889cce5e65fe0c0cc3_6a2fca75594b1b47496d46ae_Eli-Ainhorn.svg" alt="Gal Moyal" loading="lazy"/></div><div class="blog-card_author-meta"><p class="text-medium-medium">Eli Ainhorn</p><p class="text-regular-light">March 5, 2026</p></div></div></div><div fs-toc-offsettop="3rem" fs-toc-element="contents" class="blog_rte w-richtext"><p>Trust is the most vulnerable component of the modern development stack. In our previous analysis of <strong>OpenClaw</strong>, Noma Security’s research team highlighted how “Fear of Missing Out” and the need for instant productivity lead teams to adopt new tools before they are properly vetted. Today, we are disclosing a critical vulnerability in Upstash’s Context7 MCP Server, one of the most popular MCP servers on GitHub, with approximately 50,000 stars and more than 8 million npm downloads.</p><p>Context7 serves a simple but powerful purpose: it provides AI coding assistants like Cursor, Claude Code, Windsurf, etc. with up-to-date, version-specific library documentation via MCP. Developers install the Context7 MCP server into their IDE, and when they ask their AI assistant for help with a library, the assistant pulls real documentation from Context7’s registry.</p><p>The issue was responsibly disclosed to the Context7 team and fixed within two days before publication. No evidence of exploitation in the wild was observed. We thank Context7 for their quick response and collaboration.</p><figure style="max-width:1024px" class="w-richtext-align-fullwidth w-richtext-figure-type-image"><div><img alt="" src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a7e10e2e8b25c8094185066_ContextCRush-01-1-1024x823.png" loading="lazy"/></div></figure><h2>Why You Should Care</h2><p>MCP servers occupy a privileged position in the AI agent’s trust chain. By design, any MCP server that delivers content into an agent’s context is effectively an instruction source, and today’s AI agents have no native mechanism to distinguish between legitimate tool output and adversarial threats. When a server aggregates third-party or user-generated content and delivers it through a trusted channel, the content inherits the channel’s trust, regardless of its origin or intent. And this is not theoretical, it is a structural property of how agents consume MCP tool output today.</p><p>What makes ContextCrush particularly dangerous is Context7’s dual role. Context7 operates both as the registry, where anyone can publish and manage library documentation, and as the trusted delivery mechanism that pushes content directly into the AI agent’s context. The attacker never needs to reach the victim’s machine. Instead, the attacker can plant malicious custom rules in Context7’s registry, and Context7’s infrastructure delivers them through the MCP server to the AI agent running in the developer’s IDE. As agents are execution machines and run whatever is loaded into their context, all the victim’s agent does is execute the attacker’s instructions on the victim’s machine, using its own tool access (Bash, file read/write, network). In this scenario, the agent has no way to distinguish between legitimate documentation and attacker-controlled content because they arrive through the same trusted channel and from the same trusted source.</p><p>Adoption numbers such as GitHub stars and downloads often create a false sense of DevOps security. When a tool reaches a certain level of popularity, organizations tend to assume every aspect of the supply chain has been verified. However, relying on a third-party provider to vet every piece of user-generated content is a dangerous game of roulette that the industry can’t afford to keep playing.</p><h2>The Mechanism of the Attack: Context Poisoning using Custom Rules</h2><p>The ContextCrush vulnerability is found within the “Custom Rules” feature of Context7. Context7 allows library owners to set “AI Instructions” (Custom Rules) through their library dashboard to help the AI agents better understand how to work with that library. However, the custom rules were served verbatim through Context7’s MCP server to every user who queried that library, with no sanitization, content filtering, or distinction from the legitimate documentation flowing through the same channel.</p><p>The easy access transformed the vulnerability into a supply-chain attack, distinct from traditional indirect or direct prompt injection. The attacker did not inject malicious content into a chat, a document, or a web page that the user happens to open. Instead, the payload lives on Context7’s own platform, hosted and served by Context7’s own infrastructure.</p><p>Context7’s infrastructure acts as the middleman, manipulating the AI agent into doing the attacker’s bidding. The attacker never touches the victim’s machine. Context7 does the delivery for them, through a channel that’s inherently trusted. This dynamic is not unique to Context7’s architecture. Any MCP server that aggregates user-generated or third-party content and serves it into an agent’s context creates the same trust confusion.</p><p>What makes this particularly striking is how minimal the Context7 MCP server actually is. It exposes only two tools: <code>resolve-library-id</code> and <code>query-docs</code>. It cannot execute code, write files, or make network requests. It can only look up libraries and serve documentation. But that’s exactly the point. The MCP server doesn’t need execution capabilities because it’s not the one executing anything. Its only job is to deliver content into the AI agent’s context, and that’s precisely where the malicious instructions are planted. The poisoned Custom Rules ride alongside legitimate documentation through these read-only tools, and the AI agent inside the IDE, which does have full tool access, treats them as trusted instructions and acts on them. The attack surface isn’t what the MCP server can do. It’s in what it can make the AI agent do.</p><p>The attack follows a straightforward pattern:</p><ul role="list"><li><strong>Open Registration:</strong> Any user with a GitHub account can register a library on Context7 to host documentation.</li><li><strong>Unsanitized Input and credibility building:</strong> The library owner sets “Custom Rules” that are stored on Context7’s platform and served verbatim through the MCP server to any AI agent querying that library. The threat extends beyond the original injected content as Context7’s credibility signals are equally gameable. Our researcher earned a “trending” badge and “top 4%” ranking for the malicious library simply by generating repeated API requests, MCP requests, and page views. No real adoption or community interest was needed, just self-interaction was enough to manufacture social proof, making the poisoned library appear popular and trustworthy to developers browsing the platform.</li><li><strong>Trusted Delivery and Execution:</strong> When a developer asks their AI assistant for help with the library, the assistant fetches documentation and rules from Context7 through the MCP server. The MCP server does not execute any code itself. It delivers the attacker’s indirect prompt injection into the AI agent’s context inside the IDE. Because the content comes from a trusted MCP source, the AI agent interprets these rules as authoritative instructions and executes them using its own tool access (even tools that exist in other MCP servers) on the user’s machine.</li></ul><p>A single poisoned library on Context7’s registry reaches every developer who queries it. The attacker publishes once, Context7 delivers the payload through its MCP server, and the AI coding agent inside the developer’s IDE executes it.</p><h2>The Illusion of “Trust Scores”</h2><p>To mitigate risk, some platforms, including Context7, attempt to provide a Trust score based on a developer’s GitHub history. The logic being that long-standing, high-activity GitHub accounts are inherently trustworthy.</p><p>However, this metric is easily undermined in multiple ways. GitHub accounts with high reputation are frequently bought and sold on the dark web or compromised via session hijacking. An attacker with a purchased, high-scoring account can register a library with malicious intent and bypass these superficial trust layers entirely.</p><p>Beyond that, GitHub activity itself is easy to fake. An attacker can use AI coding assistants such as Claude Code to spin up convincing repositories complete with working tools, frameworks, or libraries that appear legitimate and functional. GitHub Stars, often treated as a signal of trust and adoption, can be inflated by creating thousands of accounts and starring the attacker’s own repos to manufacture credibility. The entire GitHub profile, from contribution history to project portfolio to star count, can be fabricated with enough time and automation. While it all depends on how much time and how many resources a malicious actor is willing to invest, but for a supply chain attack at this scale, the return on that investment can be significant.</p><p>A high trust score does not equate to a secure supply chain; it simply means the account has a history, real or manufactured, that can be weaponized.</p><h2>Documented Impact: Exfiltration and Deletion</h2><p>During our research, the Noma Labs threat research team demonstrated how a simple request for library help could lead to a full system compromise. Our research attack process:</p><p>We registered a library in Context7 with poisoned rules that executed the following sequence:</p><ul role="list"><li><strong>Credential Theft:</strong> The AI was instructed to search for and read all .env files in the project root using a poisoned rule.</li><li><strong>Exfiltration:</strong> Another poisoned rule forced the AI to send the contents of those files to the attacker-controlled GitHub repository as Github Issue.</li><li><strong>Destructive “Cleanup”:</strong> An additional poisoned rule instructs the AI to perform a destructive capability by deleting local folders/files from the victim’s machine for “cleanup” purposes.</li></ul><h2>Technical Walkthrough</h2><p>A step-by-step breakdown of the injection process, including the specific tool calls and AI responses, is available in the video below.</p><div class="w-embed"><video
+  controls
+  muted
+  preload="metadata"
+  playsinline
+  style="width:100%;height:auto;display:block;border-radius:8px;">
+  <source src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517%2F6a7e110408383cfe57eede04_Eli-Ainhorn_s-Video-Mar-1-2026_webm.webm" type="video/webm">
+  <source src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517%2F6a7e110408383cfe57eede04_Eli-Ainhorn_s-Video-Mar-1-2026_mp4.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video></div><p><em>In this video, see the vulnerability and destructive capabilities, showing how the AI transitions from behaving as the MCP was designed to with limited scope, to nuking local files and silently exfiltrating local secrets based on a hidden rule.</em></p><h2>Responsible Disclosure Timeline</h2><p><strong>Feb 18, 2026:</strong> Noma Labs discovers and probes the ContextCrush vulnerability. Full technical report and PoC delivered to Upstash.</p><p><strong>Feb 19, 2026:</strong> Upstash accepts findings and begins immediate remediation.</p><p><strong>Feb 23, 2026:</strong> Fix was deployed to production with rule sanitization and guardrails.</p><p><strong>March 5th:</strong> Public disclosure and final verification by Noma.</p><h2>Collaboration and Remediation</h2><p>Upon receiving our report, the Upstash team immediately understood the critical nature of this vulnerability. They worked closely with Noma Labs to patch the flaw and implement robust guardrails on how “Custom Rules” are served and interpreted. This collaboration resulted in a swift resolution within 2 days, helping to protect the millions of developers who rely on Context7.</p><h2>Defending the AI Supply Chain</h2><p>Each point in your AI supply chain is a potential entry point for a malicious actor. At Noma, our research and development teams focus on building resilient solutions to protect your environments and your business. The Noma platform provides deep inspection of the data flowing between agents and external servers to identify these types of MCP server poisoning events, as well as malicious and destructive attacks.</p><h2>Crush Your Risks</h2><p>If you are currently using MCP servers in your development workflow, we recommend a thorough security review of those integrations. Contact us to arrange a dedicated audit of your entire AI supply chain, security posture, and runtime threat detection capabilities.</p></div></div><div class="blog-single_right"><div class="blog-single-right_top"><div class="blog-single-right_group"><div class="blog-single-right_title">READ TIME</div><div class="blog-single_read-time">9 min</div></div></div><div class="blog-single_toc-wrap"><div class="blog-single-toc_track"><div class="blog-single-right_title is-light">TABLE OF CONTENTS</div><div class="blog-single_track-wrap"><div class="blog-single-track_outter"><div class="blog-single-track_inner"></div></div><div class="blog-signle-track_num">100%</div></div></div><div class="blog-single-toc_list"><a fs-toc-element="link" href="#" class="blog-single-toc_link">Text Link</a></div></div><div class="blog-single-right_socials"><div class="blog-single-right-socials_title">Share this:</div><div class="blog-single-right-socials_wrap"><a id="share-twitter" href="#" class="blog-single-right-socials_block w-inline-block"><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a3a8c52d074fb0b7f03f520_twitter-logo.png" loading="lazy" alt="" class="icon-16"/></a><a id="share-linkedin" href="#" class="blog-single-right-socials_block w-inline-block"><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a3a8c844228df15a416dcf7_linkedin-logo.svg" loading="lazy" alt="" class="icon-16"/></a><a id="share-facebook" href="#" class="blog-single-right-socials_block w-inline-block"><img src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a3a8c9b55ed49684c28a865_facebook-logo.svg" loading="lazy" alt="" class="icon-16"/></a></div></div></div></div></div></div></section><section class="section is-more-blogs"><div class="padding-global"><div class="container-large"><div class="blog-single_more-blogs"><h2 class="heading-style-h3 text-align-center">Discover more</h2><div class="blog-grid_collection w-dyn-list"><div fs-list-load="pagination" fs-list-element="list" role="list" class="blog-grid_wrapper w-dyn-items"><div role="listitem" class="blog-grid_item w-dyn-item"><div class="blog-card"><div class="blog-card_img-wrap"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a7c5de25d102d299c653c46_RufRoot02.avif" loading="lazy" alt="" class="blog-card_img"/></div><div class="blog-card_wrap w-dyn-list"><div role="list" class="blog-card_topics w-dyn-items"><div role="listitem" class="blog-card_item w-dyn-item"><div fs-list-field="category" class="blog-card_topic">Noma Labs</div></div></div></div><div class="blog-card_contain"><h2 fs-list-field="name" class="heading-style-h6">RufRoot: The MCP Bridge Vulnerability That Turns Agents Into Rogue Admins (CVE-2026-59726)</h2><div class="blog-card_author-wrapper"><div class="blog-card_author-avatar"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a2fca889cce5e65fe0c0cc3_6a2fca75594b1b47496d46ae_Eli-Ainhorn.svg" alt="Gal Moyal" loading="lazy"/></div><div class="blog-card_author-meta"><p class="text-medium-medium">Eli Ainhorn</p><p class="text-regular-light">August 20, 2026</p></div></div></div></div><a href="/noma-labs/rufroot-the-mcp-bridge-vulnerability-that-turns-agents-into-rogue-admins-cve-2026-59726" class="blog-card_link w-inline-block"></a></div><div role="listitem" class="blog-grid_item w-dyn-item"><div class="blog-card"><div class="blog-card_img-wrap"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a7c4afc1ebc65d91d089005_git_lost_cover.avif" loading="lazy" alt="" class="blog-card_img"/></div><div class="blog-card_wrap w-dyn-list"><div role="list" class="blog-card_topics w-dyn-items"><div role="listitem" class="blog-card_item w-dyn-item"><div fs-list-field="category" class="blog-card_topic">Noma Labs</div></div></div></div><div class="blog-card_contain"><h2 fs-list-field="name" class="heading-style-h6">GitLost: How We Tricked GitHub’s AI Agent into Leaking Private Repos</h2><div class="blog-card_author-wrapper"><div class="blog-card_author-avatar"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a8c4e6a58e250d8d05e45c6_Sasi-1.svg" alt="Gal Moyal" loading="lazy"/></div><div class="blog-card_author-meta"><p class="text-medium-medium">Sasi Levi</p><p class="text-regular-light">August 12, 2026</p></div></div></div></div><a href="/noma-labs/gitlost-how-we-tricked-githubs-ai-agent-into-leaking-private-repos" class="blog-card_link w-inline-block"></a></div><div role="listitem" class="blog-grid_item w-dyn-item"><div class="blog-card"><div class="blog-card_img-wrap"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a2fca22d399e65b54ff5e09_6a2fc973b311c5bd0a011fff_GrafanaGhost-Identity.webp" loading="lazy" alt="" class="blog-card_img"/></div><div class="blog-card_wrap w-dyn-list"><div role="list" class="blog-card_topics w-dyn-items"><div role="listitem" class="blog-card_item w-dyn-item"><div fs-list-field="category" class="blog-card_topic">Noma Labs</div></div></div></div><div class="blog-card_contain"><h2 fs-list-field="name" class="heading-style-h6">GrafanaGhost: The Phantom Stealing Your Data</h2><div class="blog-card_author-wrapper"><div class="blog-card_author-avatar"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a8c4e6a58e250d8d05e45c6_Sasi-1.svg" alt="Gal Moyal" loading="lazy"/></div><div class="blog-card_author-meta"><p class="text-medium-medium">Sasi Levi</p><p class="text-regular-light">August 17, 2026</p></div></div></div></div><a href="/noma-labs/grafanaghost" class="blog-card_link w-inline-block"></a></div><div role="listitem" class="blog-grid_item w-dyn-item"><div class="blog-card"><div class="blog-card_img-wrap"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a2fca43351f334fbb52e499_6a2fc985351f334fbb5279af_How-does-prompt-engineering-impact-AI-security_-1.webp" loading="lazy" alt="|||" class="blog-card_img"/></div><div class="blog-card_wrap w-dyn-list"><div role="list" class="blog-card_topics w-dyn-items"><div role="listitem" class="blog-card_item w-dyn-item"><div fs-list-field="category" class="blog-card_topic">Noma Labs</div></div><div role="listitem" class="blog-card_item w-dyn-item"><div fs-list-field="category" class="blog-card_topic">Research</div></div><div role="listitem" class="blog-card_item w-dyn-item"><div fs-list-field="category" class="blog-card_topic">Vulnerability</div></div></div></div><div class="blog-card_contain"><h2 fs-list-field="name" class="heading-style-h6">DockerDash: Two Attack Paths, One AI Supply Chain Crisis</h2><div class="blog-card_author-wrapper"><div class="blog-card_author-avatar"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a8c4e6a58e250d8d05e45c6_Sasi-1.svg" alt="Gal Moyal" loading="lazy"/></div><div class="blog-card_author-meta"><p class="text-medium-medium">Sasi Levi</p><p class="text-regular-light">August 25, 2026</p></div></div></div></div><a href="/noma-labs/dockerdash" class="blog-card_link w-inline-block"></a></div><div role="listitem" class="blog-grid_item w-dyn-item"><div class="blog-card"><div class="blog-card_img-wrap"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a2fcae0b2cdbe67d0bfa187_6a2fcaa5e2f7e8ba9d5d724a_image-5337.svg" loading="lazy" alt="" class="blog-card_img"/></div><div class="blog-card_wrap w-dyn-list"><div role="list" class="blog-card_topics w-dyn-items"><div role="listitem" class="blog-card_item w-dyn-item"><div fs-list-field="category" class="blog-card_topic">Case study</div></div></div></div><div class="blog-card_contain"><h2 fs-list-field="name" class="heading-style-h6">Hacking Google Gemini Enterprise with an Indirect Prompt Injection</h2><div class="blog-card_author-wrapper"><div class="blog-card_author-avatar"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a8c4e6a58e250d8d05e45c6_Sasi-1.svg" alt="Gal Moyal" loading="lazy"/></div><div class="blog-card_author-meta"><p class="text-medium-medium">Sasi Levi</p><p class="text-regular-light">August 23, 2026</p></div></div></div></div><a href="/noma-labs/geminijack" class="blog-card_link w-inline-block"></a></div><div role="listitem" class="blog-grid_item w-dyn-item"><div class="blog-card"><div class="blog-card_img-wrap"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a2fcb070d6f0ed3c0bc2420_6a2fcaa7312ca19ce5c3cc6b_image-5338-1.svg" loading="lazy" alt="" class="blog-card_img"/></div><div class="blog-card_contain"><h2 fs-list-field="name" class="heading-style-h6">AI Agent risk exposed in Salesforce Agentforce</h2><div class="blog-card_author-wrapper"><div class="blog-card_author-avatar"><img src="https://cdn.prod.website-files.com/6a2fc1eb62d2fd1e9605374e/6a8c4e6a58e250d8d05e45c6_Sasi-1.svg" alt="Gal Moyal" loading="lazy"/></div><div class="blog-card_author-meta"><p class="text-medium-medium">Sasi Levi</p><p class="text-regular-light">August 23, 2026</p></div></div></div></div><a href="/noma-labs/forcedleak" class="blog-card_link w-inline-block"></a></div></div></div></div></div></div></section></main><footer data-wf--footer--variant="white" class="section is-footer"><div class="display-none w-embed"><style>
+  .section.is-footer {
+    background: linear-gradient(0deg, var(--color-brand--noma-blue-100) -180%, var(--background-color--primary) 72%);
+  }
+</style></div><div class="section_circles-wrap"><img loading="lazy" src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a29655e38abe492444cdd7e_footer_circle_full.svg" alt="" class="section_circle"/><img loading="lazy" src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a29655e38abe492444cdd7e_footer_circle_full.svg" alt="" class="section_circle is-right"/></div><div class="footer_cta-wrap"><div class="padding-global"><div class="container-large"><div data-wf--content-block--size="extra-large" class="content_block text-align-center flex-align-center"><div class="content_block-contain flex-align-center"><h2 class="content_block_heading heading-style-h2">Ready to navigate AI securely?</h2><p class="content_block_text text-color-secondary">The AI era demands a new security standard. Discover, secure, and protect everything AI touches across your enterprise, with Noma Security.</p></div><div class="button-group"><a data-wf--button--variant="primary" href="/request-demo" class="button w-inline-block"><div>Get a demo</div><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 18 18" fill="none" class="button_icon"><path d="M17.8135 8.97754L8.83594 17.9551L8.12891 17.248L15.8994 9.47754H0V8.47754H15.8994L8.12891 0.707031L8.83594 0L17.8135 8.97754Z" fill="currentColor"></path></svg></a></div></div></div></div></div><div class="footer_wrap"><div class="padding-global"><div class="container-large"><div class="footer_contain"><div class="footer_left"><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 151 24" fill="none" class="footer_logo"><path d="M145.19 21.3236L143.423 17.7355H133.141L131.652 20.7583C131.481 21.1044 131.129 21.3236 130.743 21.3236H125.643L135.336 2.58008H140.691C141.07 2.58008 141.417 2.79128 141.59 3.12759L151 21.3236H145.19ZM135.015 13.853H141.522L138.282 7.2124L135.015 13.853Z" fill="currentColor"></path><path d="M116.28 2.58008H121.584C121.864 2.58008 122.09 2.80678 122.09 3.08643V21.3236H116.655V9.35451L109.269 18.4083C109.215 18.474 109.135 18.512 109.05 18.512C108.965 18.512 108.885 18.474 108.832 18.4083L101.446 9.35451V20.8172C101.446 21.0969 101.219 21.3236 100.939 21.3236H96.1707V2.58008H101.648C101.96 2.58008 102.254 2.72336 102.446 2.96858L109.184 11.577L116.28 2.58008Z" fill="currentColor"></path><path d="M79.4608 21.901C72.0437 21.901 67.2507 18.2594 67.2507 11.9134C67.2507 5.56738 72.0437 1.92578 79.4608 1.92578C86.8778 1.92578 91.6976 5.56738 91.6976 11.9134C91.6976 18.2594 86.8778 21.901 79.4608 21.901ZM79.4608 17.4561C83.5843 17.4561 86.1281 15.4479 86.1281 11.9134C86.1281 8.3789 83.5843 6.37067 79.4608 6.37067C75.364 6.37067 72.7934 8.3789 72.7934 11.9134C72.7934 15.4479 75.3372 17.4561 79.4608 17.4561Z" fill="currentColor"></path><path d="M57.5703 2.58008H62.3389C62.6185 2.58008 62.8452 2.80678 62.8452 3.08643V21.3236H58.0522L45.7543 9.00642V20.8172C45.7543 21.0969 45.5276 21.3236 45.248 21.3236H40.4794V2.58008H45.8396C46.1106 2.58008 46.3702 2.68865 46.5605 2.88152L57.5703 14.0404V2.58008Z" fill="currentColor"></path><path d="M19.9001 21.9752L21.0597 23.136C21.2934 23.37 21.4102 23.4869 21.545 23.5307C21.6636 23.5693 21.7913 23.5693 21.9098 23.5307C22.0446 23.4869 22.1614 23.37 22.3951 23.136L31.9755 13.5456C33.9374 11.5816 34.9183 10.5996 35.2858 9.4673C35.6091 8.47127 35.6091 7.39835 35.2858 6.40232C34.9183 5.26998 33.9374 4.288 31.9755 2.32405L30.3216 0.66842C30.0879 0.434475 29.971 0.317502 29.8363 0.273682C29.7177 0.235137 29.59 0.235137 29.4715 0.273682C29.3367 0.317503 29.2199 0.434475 28.9862 0.66842L17.7642 11.9022V6.99129C17.7642 5.87534 17.7642 5.31737 17.6382 4.79228C17.5266 4.32673 17.3424 3.88169 17.0925 3.47347C16.8107 3.01303 16.4166 2.61848 15.6283 1.82939L14.4687 0.668538C14.235 0.434593 14.1181 0.31762 13.9833 0.2738C13.8648 0.235254 13.7371 0.235254 13.6185 0.2738C13.4838 0.31762 13.3669 0.434593 13.1332 0.668537L3.55286 10.259C1.59097 12.2229 0.610031 13.2049 0.242498 14.3372C-0.0807927 15.3333 -0.0807918 16.4062 0.242499 17.4022C0.610032 18.5346 1.59098 19.5165 3.55286 21.4805L5.20675 23.1361C5.44045 23.3701 5.5573 23.487 5.69207 23.5309C5.81061 23.5694 5.93832 23.5694 6.05687 23.5309C6.19164 23.487 6.30849 23.3701 6.54219 23.1361L17.7642 11.9022L17.7642 16.8133C17.7642 17.9292 17.7642 18.4872 17.8901 19.0123C18.0018 19.4778 18.1859 19.9229 18.4358 20.3311C18.7177 20.7915 19.1118 21.1861 19.9001 21.9752Z" fill="currentColor"></path></svg><p class="text-regular-light">Noma Security is committed to the highest international privacy and security regulations. Securing your organization’s data and adhering to compliance requirements is top of mind.</p></div><div class="footer_center"><div class="footer_center-column"><div class="footer_column-title">Platform</div><a href="/platform" class="footer_column-link">Platform Overview</a><a href="/platform/endpoint-agents" class="footer_column-link">Noma for Endpoint AI Agents</a><a href="/platform/saas-agents" class="footer_column-link">Noma for SaaS Agents</a><a href="/platform/homegrown-agents" class="footer_column-link">Noma for Homegrown Agents</a></div><div class="footer_center-column"><div class="footer_column-title">PRODUCTS</div><a href="/products/ai-spm" class="footer_column-link">AI-SPM</a><a href="/products/agent-access-control" class="footer_column-link">Agent Access Control</a><a href="/products/ai-dr" class="footer_column-link">AI-DR</a><a href="/products/ai-red-teaming" class="footer_column-link">AI Red Teaming</a></div><div id="w-node-a9cc16a0-9dc3-7c20-54c8-a64e53e71dcb-53e71d9c" class="footer_center-column"><div class="footer_column-title">Company</div><a href="/about" class="footer_column-link">About</a><a href="/careers" class="footer_column-link">Careers</a><a href="/contact" class="footer_column-link">Contact Us</a><a href="/partners" class="footer_column-link">Partners</a></div><div class="footer_double-column"><div class="footer_column-title">Solutions</div><a href="/solutions/ai-asset-discovery" class="footer_column-link">AI Asset Discovery</a><a href="/solutions/agentic-identity" class="footer_column-link">Agentic Identity</a><a href="/solutions/agent-control-plane" class="footer_column-link">AI Agent Control Plane</a><a href="/solutions/ai-compliance" class="footer_column-link">AI Compliance &amp; Regulation</a><a href="/solutions/agent-behavior-runtime-control" class="footer_column-link">Agent Behavior Runtime Control</a><a href="/solutions/mcp-security" class="footer_column-link">MCP Security</a><a href="/solutions/ai-supply-chain-security" class="footer_column-link">AI Supply Chain Security</a><a href="/solutions/coding-assistant-security" class="footer_column-link">Coding Assistant Security</a></div><div class="footer_center-column"><div class="footer_column-title">RESOURCES</div><a href="/blog" class="footer_column-link">Blog</a><a href="/noma-labs" class="footer_column-link">Noma Labs</a><a href="/webinars" class="footer_column-link">Webinars</a><a href="https://trust.noma.security/" target="_blank" class="footer_column-link">Trust Center</a></div></div><div class="footer_right"><div class="footer_right-top"><div class="footer_column-title text-weight-regular">Stay Updated</div><div class="footer_right-socials-wrap"><a href="https://www.linkedin.com/company/noma-security/" target="_blank" class="footer_right-social w-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 16 16" fill="none" class="footer_right-social-icon"><path d="M4.36964 5.64062H1.79578V13.3827H4.36964V5.64062Z" fill="currentColor"></path><path d="M3.1 1.9082C2.21941 1.9082 1.64404 2.48714 1.64404 3.24594C1.64404 3.98881 2.20191 4.58371 3.06594 4.58371H3.08257C3.98002 4.58371 4.53864 3.98881 4.53864 3.24594C4.52199 2.48714 3.98008 1.9082 3.1 1.9082Z" fill="currentColor"></path><path d="M10.6861 5.45898C9.32081 5.45898 8.70928 6.2098 8.36684 6.73718V5.64104H5.79364C5.82776 6.36725 5.79364 13.3831 5.79364 13.3831H8.36681V9.05936C8.36681 8.82793 8.38344 8.59657 8.45165 8.43117C8.63737 7.96898 9.06106 7.49022 9.77199 7.49022C10.7027 7.49022 11.0756 8.20043 11.0756 9.24075V13.3831H13.6489V8.94333C13.6489 6.56524 12.3792 5.45898 10.6861 5.45898Z" fill="currentColor"></path></svg></a><a href="https://x.com/NomaSecurity" target="_blank" class="footer_right-social w-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 15 15" fill="none" class="footer_right-social-icon"><g clip-path="url(#clip0_12859_26199)"><path d="M11.0927 2.83203H12.7602L9.11708 6.99592L13.403 12.662H10.0471L7.41876 9.22556L4.41128 12.662H2.7427L6.63941 8.20828L2.52795 2.83203H5.96896L8.34479 5.97309L11.0927 2.83203ZM10.5074 11.6639H11.4314L5.46687 3.77773H4.4753L10.5074 11.6639Z" fill="currentColor"></path></g><defs><clippath id="clip0_12859_26199"><rect width="10.5" height="10.0962" fill="currentColor" transform="translate(2.25 2.45117)"></rect></clippath></defs></svg></a></div></div><div class="footer_right-badges"><img loading="lazy" src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a29806cc38d6355a20233e8_hipaa.avif" alt="Circular badge with caduceus symbol and text &#x27;HIPAA Compliant&#x27; around the edge." class="footer_right-badge"/><img loading="lazy" src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a29806cb974251f42e42b4d_soc2.avif" alt="Seal of AICPA SOC 2 with text AICPA Service Organization Control Reports." class="footer_right-badge"/><img loading="lazy" src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/6a29806c751257196d6dc130_iso.avif" alt="ISO 27001 Information Security Management Certified logo with globe symbol in center" class="footer_right-badge"/></div><div class="footer_right-policy"><div class="footer_privacy">Ⓒ 2026 Noma Security | <a href="/privacy-policy">Privacy Policy</a></div><div class="footer_privacy"><a href="/terms-of-use">Terms of Use</a> | <a href="/terms">Terms and Conditions </a></div></div></div></div></div></div></div></footer></div><script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=6a26af028fd645aaf775e517" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script><script src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/js/webflow.schunk.36b8fb49256177c8.js" type="text/javascript" integrity="sha384-4abIlA5/v7XaW1HMXKBgnUuhnjBYJ/Z9C1OSg4OhmVw9O3QeHJ/qJqFBERCDPv7G" crossorigin="anonymous"></script><script src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/js/webflow.schunk.d7d73220e2794a52.js" type="text/javascript" integrity="sha384-YQDD2af5RjsETQDqTunGTrxIHRBJKVZjElHA//9ekZzHaiTnoiyUcIvYaAfGDFcp" crossorigin="anonymous"></script><script src="https://cdn.prod.website-files.com/6a26af028fd645aaf775e517/js/webflow.7be9f90c.e6471b05df1cf144.js" type="text/javascript" integrity="sha384-UwsFwlh+IqywKEaoJx4DRNGR0P8F+NX84ZqOn/I/8P/D4P9Qxu9HLGb1h1KT92qT" crossorigin="anonymous"></script><script src="https://cdn.prod.website-files.com/gsap/3.15.0/gsap.min.js" type="text/javascript"></script><script src="https://cdn.prod.website-files.com/gsap/3.15.0/ScrollTrigger.min.js" type="text/javascript"></script><script type="text/javascript">gsap.registerPlugin(ScrollTrigger);</script><script>
+  // Blog TOC scroll progress tracker
+  (function () {
+    var section = document.querySelector('.blog_rte');
+    var inner = document.querySelector('.blog-single-track_inner');
+    var numEl = document.querySelector('.blog-signle-track_num');
+
+    if (!section || !inner || !numEl) return;
+
+    function update() {
+      var rect = section.getBoundingClientRect();
+      var viewportHeight = window.innerHeight;
+      var total = rect.height - viewportHeight;
+
+      var atPageBottom = window.scrollY + viewportHeight >= document.documentElement.scrollHeight - 1;
+
+      var pct;
+      if (atPageBottom || rect.bottom <= viewportHeight) {
+        pct = 100;
+      } else if (rect.top >= 0) {
+        pct = 0;
+      } else {
+        pct = total > 0 ? (-rect.top / total) * 100 : 100;
+      }
+
+      pct = Math.min(100, Math.max(0, pct));
+
+      var rounded = Math.round(pct);
+      inner.style.width = rounded + '%';
+      numEl.textContent = rounded + '%';
+    }
+
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    update();
+  })();
+</script>
+
+<script>
+  // Blog read time calculator
+  (function () {
+    var rte = document.querySelector('.blog_rte');
+    var readTimeEl = document.querySelector('.blog-single_read-time');
+  
+    if (!rte || !readTimeEl) return;
+  
+    var words = rte.innerText.trim().split(/\s+/).filter(Boolean).length;
+    var mins = Math.ceil(words / 200);
+  
+    readTimeEl.textContent = mins === 1 ? '1 min' : mins + ' mins';
+  })();
+</script>
+
+<script>
+// TOC generator
+
+document.addEventListener('DOMContentLoaded', function () {
+  const rte = document.querySelector('.blog_rte');
+  const list = document.querySelector('.blog-single-toc_list');
+  const template = document.querySelector('.blog-single-toc_link');
+
+  if (!rte || !list || !template) return;
+
+  const remBase = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  const scrollOffset = remBase * 3;
+
+  const headings = rte.querySelectorAll('h2, h3');
+  if (!headings.length) {
+    template.remove();
+    return;
+  }
+
+  const usedSlugs = {};
+
+  function slugify(text) {
+    const base = text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+    let unique = base;
+    let i = 1;
+    while (usedSlugs[unique]) {
+      unique = base + '-' + i;
+      i++;
+    }
+    usedSlugs[unique] = true;
+    return unique;
+  }
+
+  const links = [];
+
+  headings.forEach(function (heading) {
+    if (!heading.id) heading.id = slugify(heading.textContent);
+    heading.style.scrollMarginTop = '3rem';
+
+    const link = template.cloneNode(true);
+    link.textContent = heading.textContent;
+    link.setAttribute('href', '#' + heading.id);
+
+    list.appendChild(link);
+    links.push({ link: link, heading: heading });
+  });
+
+  template.remove();
+  
+  const fillBar = document.querySelector('.blog-single-track_inner');
+  const fillNum = document.querySelector('.blog-signle-track_num');
+
+  function updateActiveLink() {
+    let current = null;
+    headings.forEach(function (heading) {
+      if (heading.getBoundingClientRect().top <= scrollOffset) current = heading;
+    });
+
+    links.forEach(function (entry) {
+      entry.link.classList.toggle('is-active', entry.heading === current);
+    });
+
+    const rteRect = rte.getBoundingClientRect();
+    const rteTop = rteRect.top + window.scrollY;
+    const scrolled = window.scrollY + window.innerHeight / 2 - rteTop;
+    const progress = Math.min(Math.max(scrolled / rte.offsetHeight, 0), 1);
+
+    if (fillBar) fillBar.style.width = (progress * 100) + '%';
+    if (fillNum) fillNum.textContent = Math.round(progress * 100) + '%';
+  }
+
+  window.addEventListener('scroll', updateActiveLink);
+  window.addEventListener('resize', updateActiveLink);
+  updateActiveLink();
+});
+</script>
+
+<script>
+  //social share
+  document.addEventListener('DOMContentLoaded', function () {
+    var canonical = document.querySelector('link[rel="canonical"]');
+    var ogTitle = document.querySelector('meta[property="og:title"]');
+
+    var url = encodeURIComponent(canonical ? canonical.href : window.location.origin + window.location.pathname);
+    var title = encodeURIComponent(ogTitle ? ogTitle.content : document.title);
+
+    var links = {
+      'share-twitter': 'https://x.com/intent/post?url=' + url + '&text=' + title,
+      'share-linkedin': 'https://www.linkedin.com/sharing/share-offsite/?url=' + url,
+      'share-facebook': 'https://www.facebook.com/sharer/sharer.php?u=' + url
+    };
+
+    Object.keys(links).forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.href = links[id];
+      el.target = '_blank';
+      el.rel = 'noopener noreferrer';
+    });
+  });
+</script>
+
+<!-- Custom FAQ script -->
+<script>
+// FAQ accordion — builds items from the CMS rich text, one open at a time
+document.addEventListener('DOMContentLoaded', function () {
+  var source = document.querySelector('.faq_source');
+  var list = document.querySelector('.faq_list');
+  if (!source || !list) return;
+
+  var groups = [];
+  Array.prototype.slice.call(source.children).forEach(function (node) {
+    if (node.tagName === 'H3') groups.push({ q: node.textContent.trim(), a: [] });
+    else if (groups.length) groups[groups.length - 1].a.push(node);
+  });
+
+  var section = source.closest('section');
+  if (!groups.length) { if (section) section.style.display = 'none'; return; }
+  source.style.display = 'none';
+
+  groups.forEach(function (group) {
+    var item = document.createElement('div'); item.className = 'faq_item';
+    var head = document.createElement('div'); head.className = 'faq_head';
+    var q = document.createElement('div'); q.className = 'faq_question'; q.textContent = group.q;
+    var plus = document.createElement('div'); plus.className = 'faq_plus-wrap';
+    var l1 = document.createElement('div'); l1.className = 'faq_plus-line';
+    var l2 = document.createElement('div'); l2.className = 'faq_plus-line-vertical';
+    plus.appendChild(l1); plus.appendChild(l2);
+    head.appendChild(q); head.appendChild(plus);
+
+    var answer = document.createElement('div'); answer.className = 'faq_answer';
+    var inner = document.createElement('div'); inner.className = 'faq_answer-inner';
+    group.a.forEach(function (n) { inner.appendChild(n); });
+    answer.appendChild(inner);
+
+    item.appendChild(head); item.appendChild(answer); list.appendChild(item);
+
+    head.setAttribute('role', 'button');
+    head.setAttribute('tabindex', '0');
+    head.setAttribute('aria-expanded', 'false');
+
+    function toggle() {
+      var wasOpen = item.classList.contains('is-open');
+      list.querySelectorAll('.faq_item.is-open').forEach(function (o) {
+        o.classList.remove('is-open');
+        o.querySelector('.faq_answer').style.height = '0px';
+        o.querySelector('.faq_plus-line-vertical').style.transform = 'rotate(90deg)';
+        o.querySelector('.faq_head').setAttribute('aria-expanded', 'false');
+      });
+      if (!wasOpen) {
+        item.classList.add('is-open');
+        answer.style.height = inner.offsetHeight + 'px';
+        l2.style.transform = 'rotate(0deg)';
+        head.setAttribute('aria-expanded', 'true');
+      }
+    }
+    head.addEventListener('click', toggle);
+    head.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+  });
+
+  window.addEventListener('resize', function () {
+    var open = list.querySelector('.faq_item.is-open .faq_answer');
+    if (open) open.style.height = open.firstElementChild.offsetHeight + 'px';
+  });
+});
+</script></body></html>

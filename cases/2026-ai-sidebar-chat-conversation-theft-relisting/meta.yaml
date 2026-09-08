@@ -1,0 +1,44 @@
+slug: 2026-ai-sidebar-chat-conversation-theft-relisting
+title_en: AI Sidebar Chat Theft and Chrome Store Relisting
+title_cn: AI Sidebar 窃取聊天记录后重返 Chrome 商店并再次投放恶意更新
+year: 2026
+disclosed: '2026-01-07'
+category: supply-chain
+severity: high
+severity_basis: quantifiable-impact
+severity_evidence: OX Security documented two extensions with more than 900,000 combined installs exfiltrating AI
+  conversations; Netskope later observed the 300,000-install sidebar relisted and delivering a new malicious monetization
+  build.
+real_incident: true
+reproducible: false
+ai_tool:
+- ChatGPT
+- DeepSeek
+- Claude
+- AI Sidebar Chrome extension
+language:
+- JavaScript
+- Chrome extension
+attack_surface:
+- browser DOM
+- AI conversations
+- extension auto-update
+- Chrome Web Store
+references:
+- title: OX Security original analysis
+  url: https://www.ox.security/blog/malicious-chrome-extensions-steal-chatgpt-deepseek-conversations/
+- title: Netskope relisting analysis
+  url: https://www.netskope.com/blog/ai-sidebar-extension-monetizes-its-own-updates
+- title: SecurityWeek report
+  url: https://www.securityweek.com/extension-banned-for-stealing-ai-chats-returns-to-chrome-store-resumes-malicious-activities/
+- title: TechRadar original campaign report
+  url: https://www.techradar.com/pro/security/this-new-malware-campaign-is-stealing-chat-logs-via-chrome-extensions
+- title: The Deep View report
+  url: https://www.thedeepview.com/articles/ai-add-ons-steal-chat-data-from-900k-users
+tldr: 两款仿冒 AI 侧边栏扩展读取 ChatGPT 与 DeepSeek 页面中的提示和回复，每 30 分钟发送到外部服务器。Google 下架后，其中一款又以相同扩展 ID 重返商店，先发布干净版本，再通过更新加入静默联盟营销跳转。
+tags:
+- ai-security
+- privacy
+verification_notes: OX Security documented two extensions with more than 900,000 combined installs exfiltrating
+  AI conversations; Netskope later observed the 300,000-install sidebar relisted and delivering a new malicious
+  monetization build.

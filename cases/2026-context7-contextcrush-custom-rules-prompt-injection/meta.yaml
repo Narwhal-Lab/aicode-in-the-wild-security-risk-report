@@ -1,0 +1,40 @@
+slug: 2026-context7-contextcrush-custom-rules-prompt-injection
+title_en: Context7 ContextCrush Custom Rules Prompt Injection
+title_cn: Context7 自定义 AI 规则投毒导致开发代理越权操作
+year: 2026
+disclosed: '2026-03-05'
+category: agent-risk
+severity: medium
+severity_basis: cvss
+severity_evidence: VulnCheck assigns CVE-2026-75130 a CVSS 4.0 base score of 6.4 (Medium) for Context7 through 2.1.2; Noma documented file access, credential exposure and destructive actions in controlled tests.
+real_incident: true
+reproducible: true
+ai_tool:
+- Context7 MCP Server
+- AI coding agents
+- custom AI instructions
+language:
+- TypeScript
+- MCP
+attack_surface:
+- library documentation
+- custom rules
+- MCP tool response
+- developer workstation
+references:
+- title: Noma Security ContextCrush research
+  url: https://www.noma.security/noma-labs/contextcrush
+- title: VulnCheck advisory
+  url: https://www.vulncheck.com/advisories/context7-prompt-injection-via-custom-ai-instructions
+- title: Context7 MCP changelog
+  url: https://github.com/upstash/context7/blob/master/packages/mcp/CHANGELOG.md
+- title: Context7 issue 2673
+  url: https://github.com/upstash/context7/issues/2673
+- title: Context7 data safety documentation
+  url: https://context7.com/docs/security/data-safety
+tldr: Context7 允许库维护者提供面向 AI 的自定义规则。修复前，这些规则会随文档一起进入开发代理上下文，恶意维护者可把隐藏指令送到使用该库的代理，诱导其读取 SSH 密钥、环境变量或删除本地文件。
+tags:
+- ai-security
+- prompt-injection
+verification_notes: VulnCheck records a CVSS 4.0 score of 6.4 (Medium) for CVE-2026-75130 and lists Context7 through 2.1.2 as affected. Noma documented file access, credential exposure and destructive actions in controlled tests; public sources do not report in-the-wild exploitation.
+cve: CVE-2026-75130
