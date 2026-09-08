@@ -1,0 +1,41 @@
+slug: 2026-gitlab-duo-claude-ci-command-execution
+title_en: GitLab Duo Claude Agent CI Command Execution
+title_cn: GitLab Duo Claude Agent 用户配置触发 CI 命令执行
+year: 2026
+disclosed: '2026-08-26'
+category: code-vulns
+severity: high
+severity_basis: cvss
+severity_evidence: GitLab assigned CVE-2026-18252 a CVSS 3.1 score of 7.3 High and published exact affected and
+  fixed release ranges.
+real_incident: true
+reproducible: false
+ai_tool:
+- GitLab Duo Claude Agent
+- GitLab CI/CD
+language:
+- Ruby
+- CI configuration
+attack_surface:
+- agent configuration
+- user-controlled repository content
+- CI runner
+- developer role
+references:
+- title: GitLab patch release
+  url: https://docs.gitlab.com/releases/patches/patch-release-gitlab-19-3-1-released/
+- title: GitLab Duo Workflow architecture
+  url: https://handbook.gitlab.com/handbook/engineering/architecture/design-documents/duo_workflow/
+- title: CERT-FR advisory
+  url: https://www.cert.ssi.gouv.fr/avis/CERTFR-2026-AVI-1086/
+- title: CERT Sante advisory
+  url: https://cyberveille.esante.gouv.fr/alertes/gitlab-cve-2026-18252-2026-08-27
+tldr: GitLab Duo Claude Agent 在特定条件下会处理开发者能够控制的配置来源，使具备 Developer 权限的用户有机会把配置内容带入 Agent 的执行链，并在 CI 环境中运行任意命令。GitLab
+  已在 19.1.7、19.2.5 和 19.3.1 修复。
+tags:
+- ai-security
+- code-vulns
+verification_notes: GitLab assigned CVE-2026-18252 a CVSS 3.1 score of 7.3 High and published exact affected and
+  fixed release ranges.
+cve: CVE-2026-18252
+fixed_version: 19.1.7, 19.2.5, 19.3.1

@@ -1,0 +1,44 @@
+slug: 2026-skyvern-textpromptblock-sandbox-escape
+title_en: Skyvern TextPromptBlock Sandbox Escape
+title_cn: Skyvern 文本提示块二次渲染导致沙箱逃逸
+year: 2026
+disclosed: 2026-08-29
+category: code-vulns
+severity: high
+cve: CVE-2026-82447
+severity_basis: cvss
+severity_evidence: GitHub Advisory Database records a CVSS 4.0 base score of 8.7. An attacker with low privileges can place Jinja syntax in workflow parameters or upstream block output and reach code execution with the Skyvern server process privileges.
+real_incident: true
+reproducible: true
+fixed: 1.0.45
+ai_tool:
+  - Skyvern
+  - TextPromptBlock
+  - AI browser automation workflows
+language:
+  - Python
+  - Jinja2
+attack_surface:
+  - workflow parameters
+  - upstream block output
+  - prompt templating
+  - self-hosted Skyvern server
+references:
+  - title: VulnCheck advisory
+    url: https://www.vulncheck.com/advisories/skyvern-before-1.0.45-sandbox-escape-via-textpromptblock
+  - title: GitHub Advisory Database
+    url: https://github.com/advisories/GHSA-57gg-9j2p-5v4x
+  - title: Skyvern security fix commit
+    url: https://github.com/Skyvern-AI/skyvern/commit/d723de621d5b3a340f3cc4d5b46bfe40a9a3124e
+  - title: Skyvern v1.0.45 release
+    url: https://github.com/Skyvern-AI/skyvern/releases/tag/v1.0.45
+  - title: Skyvern workflow core concepts
+    url: https://www.skyvern.com/docs/developers/getting-started/core-concepts
+tldr: Skyvern 1.0.45 之前的 TextPromptBlock 会把已由沙箱化 Jinja 环境处理过的提示再次交给普通 Jinja 环境渲染。来自工作流参数或上游块输出的模板语法因此可能在第二次渲染时被执行，最终获得 Skyvern 服务进程权限。修复提交删除了这次非沙箱渲染，公开材料未显示该漏洞已被用于真实攻击。
+tags:
+  - ai-security
+  - browser-agent
+  - sandbox-escape
+  - ssti
+  - workflow-security
+verification_notes: The VulnCheck and GitHub advisory records agree on the affected component, attack inputs, impact, CVE and fixed floor. The project commit shows the vulnerable second render being removed and adds regression tests; the v1.0.45 release contains that commit. Skyvern documentation confirms that Text Prompt is an LLM block and that workflow parameters and upstream outputs are normal inputs. No cited source reports exploitation in the wild.

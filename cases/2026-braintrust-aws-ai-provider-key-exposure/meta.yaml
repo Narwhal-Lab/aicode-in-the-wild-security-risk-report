@@ -1,0 +1,39 @@
+slug: 2026-braintrust-aws-ai-provider-key-exposure
+title_en: Braintrust AWS AI Provider Key Exposure
+title_cn: Braintrust 云账户未授权访问与 AI Provider Key 轮换事件
+year: 2026
+disclosed: '2026-05-05'
+category: cloud-iac
+severity: high
+severity_basis: quantifiable-impact
+severity_evidence: Braintrust confirmed unauthorized access to one AWS account, identified one impacted customer
+  at disclosure and instructed every customer with stored AI provider secrets to rotate them.
+real_incident: true
+reproducible: false
+ai_tool:
+- Braintrust
+- LLM provider APIs
+- Braintrust AI gateway
+language:
+- Cloud services
+- API credentials
+attack_surface:
+- AWS account
+- organization-level AI provider keys
+- gateway
+- downstream model accounts
+references:
+- title: TechCrunch incident report
+  url: https://techcrunch.com/2026/05/06/ai-evaluation-startup-braintrust-confirms-breach-tells-every-customer-to-rotate-sensitive-keys/
+- title: SecurityWeek report
+  url: https://www.securityweek.com/ai-firm-braintrust-prompts-api-key-rotation-after-data-breach/
+- title: Braintrust organization and secret documentation
+  url: https://www.braintrust.dev/docs/admin/organizations
+- title: Braintrust gateway documentation
+  url: https://www.braintrust.dev/docs/deploy/gateway
+tldr: Braintrust 在一个 AWS 账户中发现未授权访问。该环境可能包含客户保存的模型服务 Provider Key，公司因此要求所有相关客户轮换组织级 AI 密钥，并锁定账户、限制关联系统和更新内部秘密。
+tags:
+- ai-security
+- privacy
+verification_notes: Braintrust confirmed unauthorized access to one AWS account, identified one impacted customer
+  at disclosure and instructed every customer with stored AI provider secrets to rotate them.
